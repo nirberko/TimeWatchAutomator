@@ -11,10 +11,12 @@ ABSENCE_CELL_NUMBER = 3
 DAY_TYPE_NUMBER = 1
 FREE_DAYS = [u'שישי', u'שבת', u'ערב חג', u'חג']
 
+
 def get_config(config_path):
     with open(config_path) as f:
         config = json.loads(f.read())
     return config
+
 
 def login(driver):
     driver.get('https://checkin.timewatch.co.il/punch/punch.php')
@@ -28,15 +30,18 @@ def login(driver):
     e = driver.find_element(By.CSS_SELECTOR, 'button[type=submit]')
     e.click()
 
+
 def wait_for_document_ready(driver):
     while driver.execute_script('return document.readyState;') != 'complete':
         time.sleep(0.001)
     while len(driver.find_elements(By.ID, 'jqibox')) > 0:
         time.sleep(0.001)
 
+
 def wait_for_modal_to_close(driver):
     while len(driver.find_elements(By.CLASS_NAME, 'modal')) > 0:
         time.sleep(0.001)
+
 
 def click_on_confirm(driver, retries=0):
     if retries > 5:
@@ -46,6 +51,7 @@ def click_on_confirm(driver, retries=0):
         driver.find_element(By.CSS_SELECTOR, 'button.modal-popup-btn-confirm').click()
     except:
         click_on_confirm(driver, retries + 1)
+
 
 def fill_timewatch(driver):
     config = get_config(CONFIG_PATH)
@@ -89,12 +95,14 @@ def fill_timewatch(driver):
 
         time.sleep(config['time_threshold_sec'])
 
+
 def main():
     driver = webdriver.Chrome()
     login(driver)
     driver.find_element(By.PARTIAL_LINK_TEXT, 'עדכון נתוני נוכחות').click()
     fill_timewatch(driver)
     driver.close()
+
 
 def generate_config():
     company_id = input("Please enter company id: ")
@@ -106,7 +114,8 @@ def generate_config():
     leaving_hour = input("Please enter your leaving hour. leave empty for default (18:00): ")
     if not leaving_hour:
         leaving_hour = '18:00'
-    time_threshold_sec = input("Please enter the time threshold (in seconds) for actions in seconds (default is 2 seconds): ")
+    time_threshold_sec = input(
+        "Please enter the time threshold (in seconds) for actions in seconds (default is 2 seconds): ")
     if not time_threshold_sec:
         time_threshold_sec = 2
     else:
@@ -116,6 +125,7 @@ def generate_config():
               'leaving_hour': leaving_hour, 'time_threshold_sec': time_threshold_sec}
     with open(CONFIG_PATH, 'w') as f:
         f.write(json.dumps(config))
+
 
 if __name__ == '__main__':
     if not os.path.exists(CONFIG_PATH):
