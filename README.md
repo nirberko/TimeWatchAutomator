@@ -11,7 +11,7 @@ This is a Python script to automate the process of logging work hours on the Tim
 
 ## Prerequisites
 
-- Python 3.7+
+- Python 3.8+
 - Google Chrome browser
 - ChromeDriver
 
