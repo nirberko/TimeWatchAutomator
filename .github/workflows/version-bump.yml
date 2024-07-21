@@ -31,13 +31,18 @@ jobs:
         echo "new_version=$VERSION" >> $GITHUB_ENV
 
     - name: Commit and push version bump
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         git commit -am "Bump version to ${{ env.new_version }}"
+        git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
         git push origin main
 
     - name: Create new tag
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
         VERSION=${{ env.new_version }}
         git tag "v$VERSION"
