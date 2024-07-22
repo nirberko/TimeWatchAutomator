@@ -74,7 +74,7 @@ The configuration file `config.json` is generated during the initial setup and s
   "entrance_hour": "09:00",
   "leaving_hour": "18:00",
   "time_threshold_sec": 2,
-  "month": 9,
+  "month": 9
 }
 ```
 
