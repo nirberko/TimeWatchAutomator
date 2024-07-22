@@ -5,8 +5,8 @@ from selenium import webdriver
 from selenium.common import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 
-CONFIG_DIR = '/config'  # Directory in the container mapped to host
-CONFIG_PATH = os.path.join(CONFIG_DIR, 'config.json')
+CONFIG_PATH = 'config.json'
+
 ABSENCE_CELL_NUMBER = 3
 DAY_TYPE_NUMBER = 1
 FREE_DAYS = [u'שישי', u'שבת', u'ערב חג', u'חג']
@@ -96,10 +96,17 @@ def fill_timewatch(driver):
         time.sleep(config['time_threshold_sec'])
 
 
+def select_month(driver, month: int):
+    month_select = driver.find_element(By.CSS_SELECTOR, 'select.form-control[name=month]')
+    month_select.find_elements(By.TAG_NAME, 'option')[month - 1].click()
+    time.sleep(0.5)
+
+
 def main():
     driver = webdriver.Chrome()
     login(driver)
     driver.find_element(By.PARTIAL_LINK_TEXT, 'עדכון נתוני נוכחות').click()
+    select_month(driver, 6)
     fill_timewatch(driver)
     driver.close()
 
@@ -109,11 +116,19 @@ def generate_config():
     user_id = input("Please enter user id: ")
     password = input("Please enter password (probably ID), notice will be stored plain-text: ")
     entrance_hour = input("Please enter your entrance hour. leave empty for default (09:00): ")
+
     if not entrance_hour:
         entrance_hour = '09:00'
     leaving_hour = input("Please enter your leaving hour. leave empty for default (18:00): ")
     if not leaving_hour:
         leaving_hour = '18:00'
+
+    current_month = time.localtime().tm_mon
+    month = input(f"Please enter the month number (default is current month - {current_month}): ")
+
+    if not month:
+        month = current_month
+
     time_threshold_sec = input(
         "Please enter the time threshold (in seconds) for actions in seconds (default is 2 seconds): ")
     if not time_threshold_sec:
@@ -121,8 +136,9 @@ def generate_config():
     else:
         time_threshold_sec = int(time_threshold_sec)
 
+
     config = {'company_id': company_id, 'user_id': user_id, 'password': password, 'entrance_hour': entrance_hour,
-              'leaving_hour': leaving_hour, 'time_threshold_sec': time_threshold_sec}
+              'leaving_hour': leaving_hour, 'time_threshold_sec': time_threshold_sec, 'month': month}
     with open(CONFIG_PATH, 'w') as f:
         f.write(json.dumps(config))
 
