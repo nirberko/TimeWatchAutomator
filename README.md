@@ -73,7 +73,8 @@ The configuration file `config.json` is generated during the initial setup and s
   "password": "your_password",
   "entrance_hour": "09:00",
   "leaving_hour": "18:00",
-  "time_threshold_sec": 2
+  "time_threshold_sec": 2,
+  "month": 9,
 }
 ```
 
@@ -83,6 +84,7 @@ The configuration file `config.json` is generated during the initial setup and s
 - `entrance_hour`: Default entrance hour (e.g., "09:00").
 - `leaving_hour`: Default leaving hour (e.g., "18:00").
 - `time_threshold_sec`: Time in seconds to wait between actions (default is 2 seconds).
+- `month`: The month for which to log work hours (default is the current month).
 
 ## Troubleshooting
 
