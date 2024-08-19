@@ -103,10 +103,12 @@ def select_month(driver, month: int):
 
 
 def main():
+    config = get_config(CONFIG_PATH)
+
     driver = webdriver.Chrome()
     login(driver)
     driver.find_element(By.PARTIAL_LINK_TEXT, 'עדכון נתוני נוכחות').click()
-    select_month(driver, 6)
+    select_month(driver, config['month'])
     fill_timewatch(driver)
     driver.close()
 
