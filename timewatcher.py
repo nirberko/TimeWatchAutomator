@@ -101,12 +101,28 @@ def select_month(driver, month: int):
     month_select.find_elements(By.TAG_NAME, 'option')[month - 1].click()
     time.sleep(0.5)
 
+def select_year(driver, year: int):
+    year_select = driver.find_element(By.CSS_SELECTOR, 'select.form-control[name=year]')
+
+    for option in year_select.find_elements(By.TAG_NAME, 'option'):
+        if option.get_attribute('value') == str(year):
+            option.click()
+            break
+
+    time.sleep(0.5)
+
 
 def main():
     driver = webdriver.Chrome()
     login(driver)
     driver.find_element(By.PARTIAL_LINK_TEXT, 'עדכון נתוני נוכחות').click()
-    select_month(driver, 6)
+    config = get_config(CONFIG_PATH)
+
+    month = int(config['month'])
+    year = int(config['year'])
+
+    select_month(driver, month)
+    select_year(driver, year)
     fill_timewatch(driver)
     driver.close()
 
@@ -129,6 +145,12 @@ def generate_config():
     if not month:
         month = current_month
 
+    current_year = time.localtime().tm_year
+    year = input(f"Please enter the year number (default is current year - {current_year}): ")
+
+    if not year:
+        year = current_year
+
     time_threshold_sec = input(
         "Please enter the time threshold (in seconds) for actions in seconds (default is 2 seconds): ")
     if not time_threshold_sec:
@@ -138,7 +160,7 @@ def generate_config():
 
 
     config = {'company_id': company_id, 'user_id': user_id, 'password': password, 'entrance_hour': entrance_hour,
-              'leaving_hour': leaving_hour, 'time_threshold_sec': time_threshold_sec, 'month': month}
+              'leaving_hour': leaving_hour, 'time_threshold_sec': time_threshold_sec, 'month': month, 'year': year}
     with open(CONFIG_PATH, 'w') as f:
         f.write(json.dumps(config))
 
