@@ -4,13 +4,32 @@ import time
 from selenium import webdriver
 from selenium.common import StaleElementReferenceException
 from selenium.webdriver.common.by import By
+import re
 
 CONFIG_PATH = 'config.json'
 
 ABSENCE_CELL_NUMBER = 3
 DAY_TYPE_NUMBER = 1
+FULL_DATE_TYPE_NUMBER = 0
 FREE_DAYS = [u'שישי', u'שבת', u'ערב חג', u'חג']
 
+def extract_date(date_string):
+    # Use regex to match the date pattern
+    match = re.match(r'\d{2}-\d{2}-\d{4}', date_string)
+    if match:
+        return match.group(0)
+    return None
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 def get_config(config_path):
     with open(config_path) as f:
@@ -77,6 +96,9 @@ def fill_timewatch(driver):
             rows = table.find_elements(By.CLASS_NAME, 'tr')
             link = rows[link_num]
 
+            date = link.find_elements(By.CSS_SELECTOR, 'td')[
+                FULL_DATE_TYPE_NUMBER].text.strip()
+
             if has_day_name and u'יום מנוחה' in link.text:
                 continue
             elif not has_day_name and link.find_elements(By.CSS_SELECTOR, 'td')[
@@ -89,6 +111,9 @@ def fill_timewatch(driver):
             driver.execute_script(fill_form_script)
             click_on_confirm(driver)
             wait_for_modal_to_close(driver)
+
+            print(bcolors.OKGREEN + f"Filled day {extract_date(date)} successfully" + bcolors.ENDC)
+
         except StaleElementReferenceException:
             print(f"Encountered StaleElementReferenceException at row {link_num}, retrying...")
             continue
@@ -112,14 +137,18 @@ def select_year(driver, year: int):
     time.sleep(0.5)
 
 
-def main():
-    driver = webdriver.Chrome()
+def main(month, year):
+    # Set up Chrome options for headless mode
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+
+    driver = webdriver.Chrome(options=chrome_options)
+    
+
     login(driver)
     driver.find_element(By.PARTIAL_LINK_TEXT, 'עדכון נתוני נוכחות').click()
-    config = get_config(CONFIG_PATH)
-
-    month = int(config['month'])
-    year = int(config['year'])
 
     select_month(driver, month)
     select_year(driver, year)
@@ -139,18 +168,6 @@ def generate_config():
     if not leaving_hour:
         leaving_hour = '18:00'
 
-    current_month = time.localtime().tm_mon
-    month = input(f"Please enter the month number (default is current month - {current_month}): ")
-
-    if not month:
-        month = current_month
-
-    current_year = time.localtime().tm_year
-    year = input(f"Please enter the year number (default is current year - {current_year}): ")
-
-    if not year:
-        year = current_year
-
     time_threshold_sec = input(
         "Please enter the time threshold (in seconds) for actions in seconds (default is 2 seconds): ")
     if not time_threshold_sec:
@@ -160,13 +177,27 @@ def generate_config():
 
 
     config = {'company_id': company_id, 'user_id': user_id, 'password': password, 'entrance_hour': entrance_hour,
-              'leaving_hour': leaving_hour, 'time_threshold_sec': time_threshold_sec, 'month': month, 'year': year}
+              'leaving_hour': leaving_hour, 'time_threshold_sec': time_threshold_sec}
     with open(CONFIG_PATH, 'w') as f:
         f.write(json.dumps(config))
+
+    return config
 
 
 if __name__ == '__main__':
     if not os.path.exists(CONFIG_PATH):
         print('Config file "%s" does not exist. generating for next time...' % CONFIG_PATH)
-        generate_config()
-    main()
+        res = generate_config()
+        month = res['month']
+        
+    current_month = time.localtime().tm_mon
+    month_input = input(f"Please enter the month number (default is current month - {current_month}): ")
+    month = int(month_input) if month_input else current_month
+
+    current_year = time.localtime().tm_year
+    year_input = input(f"Please enter the year number (default is current year - {current_year}): ")
+    year = int(year_input) if year_input else current_year
+        
+    main(month, year)
+
+    print(bcolors.OKGREEN + 'Done!' + bcolors.ENDC)
